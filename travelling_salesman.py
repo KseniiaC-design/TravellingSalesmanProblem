@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from numpy.random import randint, rand, permutation, seed
+from plot import plot_route_ga
+
 
 df = pd.read_csv("Gemeinden.csv", sep=";", encoding="cp1252", decimal=",")
 
@@ -129,7 +131,15 @@ print(start_city)
 for i in best_route:
     print(city_names[i])
 print(start_city)
-
 print(f"\nGesamtdistanz: {best_distance:.2f} km")
+
+plot_route_ga(
+    best_route,
+    city_names,
+    latitudes,
+    longitudes,
+    title=f"Optimale TSP-Route (Distanz: {best_distance:.2f} km)"
+)
+
 
 
