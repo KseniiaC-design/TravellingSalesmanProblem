@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from numpy.random import randint, rand, permutation, seed
 from plot import plot_route_ga
+from plot_zoom import plot_route_ga_zoom
 
 
 df = pd.read_csv("Gemeinden.csv", sep=";", encoding="cp1252", decimal=",")
@@ -140,6 +141,19 @@ plot_route_ga(
     longitudes,
     title=f"Optimale TSP-Route (Distanz: {best_distance:.2f} km)"
 )
+
+plot_route_ga_zoom(
+    best_route,
+    city_names,
+    latitudes,
+    longitudes,
+    title="Zoom: Route im unteren linken Cluster",
+    lon_min = 8.85,
+    lon_max = 9.35,
+    lat_min = 53.88,
+    lat_max = 54.12
+)
+
 
 
 

@@ -60,3 +60,8 @@ def plot_route_ga(route, city_names, latitudes, longitudes, title):
     plt.legend()
     plt.grid(True)
     plt.show()
+
+
+
+
+
