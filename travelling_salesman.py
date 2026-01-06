@@ -4,8 +4,34 @@ from numpy.random import randint, rand, permutation, seed
 from plot import plot_route_ga
 from plot_zoom import plot_route_ga_zoom
 
+def load_and_validate_csv(path):
+    df = pd.read_csv(path, sep=";", encoding="cp1252", decimal=",")
 
-df = pd.read_csv("Gemeinden.csv", sep=";", encoding="cp1252", decimal=",")
+    # Pflichtspalten prüfen
+    required = {"city", "lat", "lon"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Fehlende Spalten: {missing}")
+
+    # Leere / ungültige Werte entfernen
+    df = df.dropna(subset=["city", "lat", "lon"])
+    df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
+    df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
+    df = df.dropna(subset=["lat", "lon"])
+
+    # Doppelte Koordinaten entfernen 
+    df = df.drop_duplicates(subset=["lat", "lon"])
+
+    # Mindestanzahl prüfen
+    if len(df) < 3:
+        raise ValueError("Zu wenige gültige Städte für TSP.")
+
+    return df
+
+
+
+df = load_and_validate_csv("Gemeinden.csv")
+
 
 print(list(df.columns))
 
