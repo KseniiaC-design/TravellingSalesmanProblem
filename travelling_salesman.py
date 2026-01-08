@@ -52,13 +52,16 @@ def haversine(coord1, coord2):
     a = np.sin(dlat/2)**2 + np.cos(lat1)*np.cos(lat2)*np.sin(dlon/2)**2
     return 2 * R * np.arcsin(np.sqrt(a))
 
-def total_distance(route, cities):
-    distance = 0.0
-    for i in range(len(route)):
-        a = cities[route[i]]
-        b = cities[route[(i + 1) % len(route)]]
-        distance += haversine(a, b)
-    return distance
+def total_distance(route, cities, start_city=0):
+     # Calculates total tour length: start → cities in route → start
+    full_route = [start_city] + route + [start_city]
+    return sum(
+        #assign coordinates of cities in the route to haversine function to calculate distance
+        #iterate through all cities in the full route, excluding the last one
+        #Meaning: We calculate distance between each pair of consecutive cities in the full route
+        haversine(cities[full_route[i]], cities[full_route[i + 1]])
+        for i in range(len(full_route) - 1) 
+    )
 
 def initial_population(n_pop, n_cities):
     return [permutation(n_cities).tolist() for _ in range(n_pop)]
@@ -151,26 +154,13 @@ def exact_tsp(coords, start_city):
     #Iterate through all permutations of cities
     for perm in permutations(cities):
         #Calculate distance of the current route
-        dist = route_distance(list(perm), coords, start_city)
+        dist = total_distance(list(perm), coords, start_city)
         #Update best route if current one is better
         if dist < best_distance:
             best_distance = dist
             best_route = list(perm)
     #Return best route and its distance
     return best_route, best_distance
-
-#function to calculates the randomly picked route is
-def route_distance(route, coords, start_city):
-    # Calculates total tour length: start → cities in route → start
-    full_route = [start_city] + route + [start_city]
-
-    return sum(
-        #assign coordinates of cities in the route to haversine function to calculate distance
-        #iterate through all cities in the full route, excluding the last one
-        #Meaning: We calculate distance between each pair of consecutive cities in the full route
-        haversine(coords[full_route[i]], coords[full_route[i + 1]])
-        for i in range(len(full_route) - 1) 
-    )
 
 #Main execution
 if __name__ == "__main__":
