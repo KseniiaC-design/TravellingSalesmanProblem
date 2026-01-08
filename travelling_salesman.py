@@ -1,50 +1,44 @@
+import random
 import pandas as pd
 import numpy as np
 from numpy.random import randint, rand, permutation, seed
 from plot import plot_route_ga
 from plot_zoom import plot_route_ga_zoom
+import time
+from itertools import permutations
 
+
+#Loading and preprocessing city data from CSV file
+#This CSV file was cleaned and prepared by AI
 def load_and_validate_csv(path):
-    df = pd.read_csv(path, sep=";", encoding="cp1252", decimal=",")
+    #Error handling for file not found
+    try:
+        df = pd.read_csv(path)
+    except FileNotFoundError:
+        raise FileNotFoundError("City data file not found.")
 
-    # Pflichtspalten prüfen
-    required = {"city", "lat", "lon"}
-    missing = required - set(df.columns)
-    if missing:
-        raise ValueError(f"Fehlende Spalten: {missing}")
+    # Select only relevant columns and rename them
+    df = df.iloc[:, [7, 13, 14]]
+    df.columns = ["city", "lon", "lat"]
 
-    # Leere / ungültige Werte entfernen
-    df = df.dropna(subset=["city", "lat", "lon"])
-    df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
+
+    # Clean selected columns
+    # Devide the city name (as string) into before and after comma and keep first part (Berlin, Germany -> Berlin)
+    #Convert longitude and latitude to numeric (float), if number not convertable/coerce to NaN
+    df["city"] = df["city"].astype(str).str.split(",").str[0].str.strip()
     df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
-    df = df.dropna(subset=["lat", "lon"])
+    df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
 
-    # Doppelte Koordinaten entfernen 
-    df = df.drop_duplicates(subset=["lat", "lon"])
+    # Remove rows with missing or duplicate data
+    df = df.dropna()
+    df = df.drop_duplicates(subset="city") #Remove rows with duplicate city names
 
-    # Mindestanzahl prüfen
-    if len(df) < 3:
-        raise ValueError("Zu wenige gültige Städte für TSP.")
-
-    return df
+    # Reset index after cleaning (because rows were removed)
+    return df.reset_index(drop=True)
 
 
 
-df = load_and_validate_csv("Gemeinden.csv")
 
-
-print(list(df.columns))
-
-df = df.head(30)
-
-city_names = df["city"].tolist()
-latitudes  = df["lat"].tolist()
-longitudes = df["lon"].tolist()
-
-# zip pairs each entry in latitudes with the respective entry in longitudes
-cities = list(zip(latitudes, longitudes))
-
-start_city = city_names[0]
 
 # The haversine formula determines the distance between two points on a sphere given their longitudes and latitudes.
 def haversine(coord1, coord2):
@@ -144,22 +138,115 @@ def genetic_algorithm_tsp(cities, n_iter, n_pop, r_cross, r_mut):
 
     return best, best_eval
 
-seed(1)
-#cities=cities
-n_iter=500
-n_pop=100
-r_cross=0.9
-r_mut=0.02
+#Exact TSP solution for small number of cities (≤ 10) using brute-force for comparison
+def exact_tsp(coords, start_city):
 
-best_route, best_distance = genetic_algorithm_tsp(cities, n_iter, n_pop, r_cross, r_mut)
+    #Generate all possible routes through cities excluding start city
+    cities = [i for i in range(len(coords)) if i != start_city]
 
-print("\nOptimale Route:")
-print(start_city)
-for i in best_route:
-    print(city_names[i])
-print(start_city)
-print(f"\nGesamtdistanz: {best_distance:.2f} km")
+    #Keep track of best route and its distance
+    best_route = None
+    best_distance = float("inf")
 
+    #Iterate through all permutations of cities
+    for perm in permutations(cities):
+        #Calculate distance of the current route
+        dist = route_distance(list(perm), coords, start_city)
+        #Update best route if current one is better
+        if dist < best_distance:
+            best_distance = dist
+            best_route = list(perm)
+    #Return best route and its distance
+    return best_route, best_distance
+
+#function to calculates the randomly picked route is
+def route_distance(route, coords, start_city):
+    # Calculates total tour length: start → cities in route → start
+    full_route = [start_city] + route + [start_city]
+
+    return sum(
+        #assign coordinates of cities in the route to haversine function to calculate distance
+        #iterate through all cities in the full route, excluding the last one
+        #Meaning: We calculate distance between each pair of consecutive cities in the full route
+        haversine(coords[full_route[i]], coords[full_route[i + 1]])
+        for i in range(len(full_route) - 1) 
+    )
+
+#Main execution
+if __name__ == "__main__":
+    random.seed(1) #For reproducibility
+
+    # Load and preprocess city data
+    df = load_and_validate_csv('AuszugGV3QAktuell_clean.csv')
+    df = df.head(30)
+
+    city_names = df["city"].tolist()
+    latitudes = df["lat"].tolist()
+    longitudes = df["lon"].tolist()
+    cities = list(zip(latitudes, longitudes))
+    start_city = city_names[0]
+
+
+
+#Time and run Genetic Algorithm
+    t0 = time.time()
+    #Run genetic algorithm and get best route and its distance
+    best_route, best_distance = genetic_algorithm_tsp(cities, n_iter=500, n_pop=100, r_cross=0.9, r_mut=0.02)
+    ga_time = time.time() - t0 #Calculate runtime
+
+    #Print results for GA 
+    print("\n--- Optimal Route (GA) ---")
+    print("\nRoute:")
+    for i in [0] + best_route + [0]:
+        print(city_names[i])
+
+
+    print("\n--- Metrics for Optimal GA solution ---")
+    print(f"GA distance: {best_distance:.2f} km") #Genetic Algorithm overall distance
+    print(f"GA runtime: {ga_time:.3f} s") #Genetic Algorithm runtime
+
+
+    #Now run GA and exact TSP for comparison
+    #Only use first 8 cities for exact solution due to high computational cost
+    df_small = df.head(8)
+    city_names_small = df_small["city"].tolist()
+    latitudes_small = df_small["lat"].tolist()
+    longitudes_small = df_small["lon"].tolist()
+    coords_small = list(zip(latitudes_small, longitudes_small))
+    start_city_small = 0  # Use index
+
+    #Time and run exact TSP 
+    t0 = time.time()
+    exact_route, exact_distance = exact_tsp(coords_small, start_city_small)
+    exact_time = time.time() - t0
+
+
+    #Print Comparision results
+    print("\n--- Optimal Route für Subset (Exact) ---")
+    print("\nRoute:")
+    for i in [0] + exact_route + [0]:
+        print(city_names_small[i])
+
+
+#Time and run Genetic Algorithm on small dataset
+    print("\n--- Optimal Route für Subset (GA) ---")
+    t0 = time.time()
+    ga_route_small, ga_distance_small = genetic_algorithm_tsp(coords_small, n_iter=500, n_pop=100, r_cross=0.9, r_mut=0.02)
+    ga_time_small = time.time() - t0
+    print("\nRoute:")
+    for i in [0] + ga_route_small + [0]:
+        print(city_names_small[i])
+    
+    print("\n--- Metrics Comparison for Subset ---")
+    print(f"GA distance: {ga_distance_small:.2f} km")
+    print(f"Exact distance: {exact_distance:.2f} km")
+    print(f"GA runtime: {ga_time_small:.3f} s")
+    print(f"Exact runtime: {exact_time:.4f} s")
+
+
+
+
+#Figure plotting
 plot_route_ga(
     best_route,
     city_names,
