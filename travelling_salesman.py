@@ -250,11 +250,11 @@ plot_route_ga_zoom(
     city_names,
     latitudes,
     longitudes,
-    title="Zoom: Route im unteren linken Cluster",
-    lon_min = 8.85,
-    lon_max = 9.35,
-    lat_min = 53.88,
-    lat_max = 54.12
+    title="Zoom: Route im unteren rechten Cluster",
+    lon_min = 25600,
+    lon_max = 25750,
+    lat_min = 9.40,
+    lat_max = 8.75
 )
 
 
