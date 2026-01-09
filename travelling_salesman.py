@@ -63,8 +63,9 @@ def total_distance(route, cities, start_city=0):
         for i in range(len(full_route) - 1) 
     )
 
-def initial_population(n_pop, n_cities):
-    return [permutation(n_cities).tolist() for _ in range(n_pop)]
+def initial_population(n_pop, n_cities, start_city=0):
+    cities = [i for i in range(n_cities) if i != start_city]
+    return [permutation(cities).tolist() for _ in range(n_pop)]
 
 # tournament selection
 def selection(pop, scores, k=3):
@@ -113,7 +114,7 @@ def mutation(route, r_mut):
     return route
 
 def genetic_algorithm_tsp(cities, n_iter, n_pop, r_cross, r_mut):
-    pop = initial_population(n_pop, len(cities))
+    pop = initial_population(n_pop, len(cities), start_city=0)
 
     best, best_eval = pop[0], total_distance(pop[0], cities)
 
@@ -164,7 +165,7 @@ def exact_tsp(coords, start_city):
 
 #Main execution
 if __name__ == "__main__":
-    random.seed(1) #For reproducibility
+    np.random.seed(1) #For reproducibility
 
     # Load and preprocess city data
     df = load_and_validate_csv('AuszugGV3QAktuell_clean.csv')
