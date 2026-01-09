@@ -1,7 +1,6 @@
-import random
 import pandas as pd
 import numpy as np
-from numpy.random import randint, rand, permutation, seed
+from numpy.random import randint, rand, permutation
 from plot import plot_route_ga
 from plot_zoom import plot_route_ga_zoom
 import time
@@ -12,6 +11,7 @@ from itertools import permutations
 #This CSV file was cleaned and prepared by AI
 def load_and_validate_csv(path):
     #Error handling for file not found
+    #If found load into DataFrame
     try:
         df = pd.read_csv(path)
     except FileNotFoundError:
@@ -24,7 +24,7 @@ def load_and_validate_csv(path):
 
     # Clean selected columns
     # Devide the city name (as string) into before and after comma and keep first part (Berlin, Germany -> Berlin)
-    #Convert longitude and latitude to numeric (float), if number not convertable/coerce to NaN
+    #Convert longitude and latitude to numeric (float), if number not convertable/theres problems coerce to NaN
     df["city"] = df["city"].astype(str).str.split(",").str[0].str.strip()
     df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
     df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
@@ -41,20 +41,30 @@ def load_and_validate_csv(path):
 
 
 # The haversine formula determines the distance between two points on a sphere given their longitudes and latitudes.
+# coord1 contains the latitude and longitude of the first city,
+# coord2 contains the latitude and longitude of the second city
 def haversine(coord1, coord2):
-    R = 6371 #Radius
+    R = 6371 #Radius of globe in kilometers
+
+    #Convert latitude and longitude from degrees to radians
     lat1, lon1 = np.radians(coord1)
     lat2, lon2 = np.radians(coord2)
 
+    #Difference between cities
     dlat = lat2 - lat1
     dlon = lon2 - lon1
 
+    #Haversine formula
     a = np.sin(dlat/2)**2 + np.cos(lat1)*np.cos(lat2)*np.sin(dlon/2)**2
+    #return distance in kilometers
     return 2 * R * np.arcsin(np.sqrt(a))
 
+# Calculates total tour length: 
 def total_distance(route, cities, start_city=0):
-     # Calculates total tour length: start → cities in route → start
+     #defines route as start city → cities in route → start city
     full_route = [start_city] + route + [start_city]
+    
+    #sum distances between consecutive cities in the full route
     return sum(
         #assign coordinates of cities in the route to haversine function to calculate distance
         #iterate through all cities in the full route, excluding the last one
@@ -63,7 +73,9 @@ def total_distance(route, cities, start_city=0):
         for i in range(len(full_route) - 1) 
     )
 
+# generate initial population
 def initial_population(n_pop, n_cities, start_city=0):
+    # generate random permutations meaning order of cities excluding the start city
     cities = [i for i in range(n_cities) if i != start_city]
     return [permutation(cities).tolist() for _ in range(n_pop)]
 
@@ -71,38 +83,47 @@ def initial_population(n_pop, n_cities, start_city=0):
 def selection(pop, scores, k=3):
     # first random selection
     i = randint(len(pop))
-    # check if better (e.g. perform a tournament)
+    # check if better , meaning lower distance
     for j in randint(0, len(pop), k-1):
         if scores[j] < scores[i]:
             i = j
-    return pop[i]
+    #return best individual
+    return pop[i] 
 
 # crossover two parents to create two children
-def crossover(p1, p2, r_cross):
+def crossover(p1, p2, r_cross=0.9): #Crossover-Probability (90 %)
     
-    # children are copies of parents
-    if rand() >= r_cross:
+    if rand() >= r_cross: #No crossover for 10% of the time, return copy of parents 
         return [p1.copy(), p2.copy()]
 
-    #splits at random points (will be the same as parents)
-    size = len(p1)
-    a, b = sorted(randint(0, size, 2))
 
+    #size of the route of the parent1
+    size = len(p1)
+    a, b = sorted(randint(0, size, 2)) #random crossover points
+
+# order crossover (OX) implementation, since we are dealing with permutations (routes)
+        #Create child by copying a slice from parent1 and filling remaining positions with parent2
     def ox(parent1, parent2):
-        #empty route
+        #empty route for child initialized with None and size of parent
         child = [None]*size
         #copies cities from parent1
         child[a:b] = parent1[a:b]
-        ptr = b
-        #adds cities from parent2
-        for c in parent2:
-            if c not in child:
-                if ptr >= size:
-                    ptr = 0
-                child[ptr] = c
-                ptr += 1
-        return child
+        
+        
+        #Save genes/cities already used in the child
+        used_cities = set(child[a:b])
+        #Extract  genes from parent2 in order, excluding already used genes
+        fill = [gene for gene in p2 if gene not in used_cities]
 
+        #Fill remaining positions in child with genes from fill list
+        idx = 0
+        for i in range(len(child)):
+            if child[i] is None:
+                child[i] = fill[idx]
+                idx += 1
+
+        return child
+    #Create two children using OX, with parents swapped
     return [ox(p1, p2), ox(p2, p1)]
 
 # swap two random cities
@@ -113,36 +134,41 @@ def mutation(route, r_mut):
             route[i], route[j] = route[j], route[i]
     return route
 
+# genetic algorithm for TSP, Main logic
 def genetic_algorithm_tsp(cities, n_iter, n_pop, r_cross, r_mut):
+    #create initial population with start city as index 0
     pop = initial_population(n_pop, len(cities), start_city=0)
 
+    #initialize best solution
     best, best_eval = pop[0], total_distance(pop[0], cities)
 
+    #evolve population over fixed number of generations
     for gen in range(n_iter):
-        #calculate fitness 
+        #calculate fitness scores for each individual in population
         scores = [total_distance(p, cities) for p in pop]
 
         #update best 
         for i in range(n_pop):
             if scores[i] < best_eval:
                 best, best_eval = pop[i], scores[i]
+                #print progress, always when a new best solution is found
                 print(f"Gen {gen}: neue beste Distanz = {best_eval:.2f} km")
 
         #tournament selection
         selected = [selection(pop, scores) for _ in range(n_pop)]
 
         #crossover and mutation
-        children = []
-        for i in range(0, n_pop, 2):
+        children = [] #new empty population for children
+        for i in range(0, n_pop, 2): #iterate through selected parents in pairs
             p1, p2 = selected[i], selected[i+1]
-            for c in crossover(p1, p2, r_cross):
-                children.append(mutation(c, r_mut))
+            for c in crossover(p1, p2, r_cross): #crossover parents to create children
+                children.append(mutation(c, r_mut)) #mutate children and add to new population  
 
-        pop = children
+        pop = children #replace old population with new one 
 
-    return best, best_eval
+    return best, best_eval #return best route and its distance
 
-#Exact TSP solution for small number of cities (≤ 10) using brute-force for comparison
+#Exact TSP solution for small number of cities using brute-force for comparison
 def exact_tsp(coords, start_city):
 
     #Generate all possible routes through cities excluding start city
@@ -163,23 +189,22 @@ def exact_tsp(coords, start_city):
     #Return best route and its distance
     return best_route, best_distance
 
+
 #Main execution
 if __name__ == "__main__":
     np.random.seed(1) #For reproducibility
 
     # Load and preprocess city data
     df = load_and_validate_csv('AuszugGV3QAktuell_clean.csv')
-    df = df.head(30)
+    df = df.head(30) #Use only first 30 cities for GA
+   
+    latitudes = df["lat"].tolist() #List of latitudes
+    longitudes = df["lon"].tolist() #List of longitudes
+    cities = list(zip(latitudes, longitudes)) #List of tuples of cities with (latitude, longitude)
+    city_names = df["city"].tolist() #List of city names used for printing results
+    
 
-    city_names = df["city"].tolist()
-    latitudes = df["lat"].tolist()
-    longitudes = df["lon"].tolist()
-    cities = list(zip(latitudes, longitudes))
-    start_city = city_names[0]
-
-
-
-#Time and run Genetic Algorithm
+    #Time and run Genetic Algorithm
     t0 = time.time()
     #Run genetic algorithm and get best route and its distance
     best_route, best_distance = genetic_algorithm_tsp(cities, n_iter=500, n_pop=100, r_cross=0.9, r_mut=0.02)
