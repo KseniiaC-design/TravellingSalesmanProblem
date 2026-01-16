@@ -126,12 +126,13 @@ def crossover(p1, p2, r_cross=0.9): #Crossover-Probability (90 %)
     #Create two children using OX, with parents swapped
     return [ox(p1, p2), ox(p2, p1)]
 
+# von hier
 # swap two random cities
 def mutation(route, r_mut):
-    for i in range(len(route)):
-        if rand() < r_mut:
-            j = randint(len(route))
-            route[i], route[j] = route[j], route[i]
+    for i in range(len(route)): #iterates over every city
+        if rand() < r_mut:#r_mut=0.02
+            j = randint(len(route)) #randomly chooses 2. position
+            route[i], route[j] = route[j], route[i]#replaces the two positions
     return route
 
 # genetic algorithm for TSP, Main logic
@@ -154,13 +155,13 @@ def genetic_algorithm_tsp(cities, n_iter, n_pop, r_cross, r_mut):
                 #print progress, always when a new best solution is found
                 print(f"Gen {gen}: neue beste Distanz = {best_eval:.2f} km")
 
-        #tournament selection
+        #Selects n_pop parents using tournament selection, favoring shorter routes while keeping diversity
         selected = [selection(pop, scores) for _ in range(n_pop)]
 
         #crossover and mutation
         children = [] #new empty population for children
         for i in range(0, n_pop, 2): #iterate through selected parents in pairs
-            p1, p2 = selected[i], selected[i+1]
+            p1, p2 = selected[i], selected[i+1]#choose two parents for crossover
             for c in crossover(p1, p2, r_cross): #crossover parents to create children
                 children.append(mutation(c, r_mut)) #mutate children and add to new population  
 
@@ -169,7 +170,7 @@ def genetic_algorithm_tsp(cities, n_iter, n_pop, r_cross, r_mut):
     return best, best_eval #return best route and its distance
 
 #Exact TSP solution for small number of cities using brute-force for comparison
-def exact_tsp(coords, start_city):
+def exact_tsp(coords, start_city):#evaluates all permutations
 
     #Generate all possible routes through cities excluding start city
     cities = [i for i in range(len(coords)) if i != start_city]
@@ -215,7 +216,7 @@ if __name__ == "__main__":
     print("\nRoute:")
     for i in [0] + best_route + [0]:
         print(city_names[i])
-
+#bis hier
 
     print("\n--- Metrics for Optimal GA solution ---")
     print(f"GA distance: {best_distance:.2f} km") #Genetic Algorithm overall distance
