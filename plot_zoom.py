@@ -56,9 +56,13 @@ def plot_route_ga_zoom(
     Kanten laufen bis zum Plot-Rand.
     """
 
+    # Route schließen (zurück zum Start)
+    # Erstellt Listen der Breiten- und Längengrade in der Reihenfolge der Route
+    # und fügt am Ende den Startpunkt hinzu, um die Route zu schließen
     lat = [latitudes[i] for i in route] + [latitudes[route[0]]]
     lon = [longitudes[i] for i in route] + [longitudes[route[0]]]
 
+    #Plot Eigenschaften
     plt.figure(figsize=(10, 7))
 
     # ----- KANTEN MIT CLIPPING -----
