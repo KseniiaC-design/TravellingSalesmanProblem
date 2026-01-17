@@ -260,7 +260,10 @@ if __name__ == "__main__":
     print(f"GA runtime: {ga_time_small:.3f} s")
     print(f"Exact runtime: {exact_time:.4f} s")
 
-
+zoom_min_lon = 25500
+zoom_max_lon = 25950
+zoom_min_lat = 8.87
+zoom_max_lat = 9.30
 
 
 #Figure plotting
@@ -272,15 +275,19 @@ plot_route_ga(
     title=f"Optimale TSP-Route (Distanz: {best_distance:.2f} km)"
 )
 
+
+
 plot_route_ga_zoom(
     best_route,
     city_names,
     latitudes,
     longitudes,
-    title="Zoom: Route im unteren rechten Cluster",
-    lon_min = 25600,
-    lon_max = 25750,
-    lat_min = 9.40,
-    lat_max = 8.75
+    "Optimale TSP-Route – Detailansicht",
+    min_lon=zoom_min_lon,
+    max_lon=zoom_max_lon,
+    min_lat=zoom_min_lat,
+    max_lat=zoom_max_lat
 )
+
+
 
