@@ -272,4 +272,15 @@ plot_route_ga(
     title=f"Optimale TSP-Route (Distanz: {best_distance:.2f} km)"
 )
 
+plot_route_ga_zoom(
+    best_route,
+    city_names,
+    latitudes,
+    longitudes,
+    title="Zoom: Route im unteren rechten Cluster",
+    lon_min = 25600,
+    lon_max = 25750,
+    lat_min = 9.40,
+    lat_max = 8.75
+)
 
