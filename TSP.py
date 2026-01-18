@@ -100,6 +100,7 @@ def crossover(p1, p2, r_cross=0.9): #Crossover-Probability (90 %)
     #size of the route of the parent1
     size = len(p1)
     a, b = sorted(randint(0, size, 2)) #two random crossover points between 0 (inclusive) and size (exclusive) (len(p1))
+    # randint(0, 5, 2) → [4, 1]
 
 # order crossover (OX) implementation, since we are dealing with permutations (routes)
         #Create child by copying a slice from parent1 and filling remaining positions with parent2
@@ -108,7 +109,10 @@ def crossover(p1, p2, r_cross=0.9): #Crossover-Probability (90 %)
         child = [None]*size
         #copies cities from parent1
         child[a:b] = parent1[a:b]
-        
+
+        #child = [None, None, None, None, None]
+        #child[1:4] = [5, 1, 4]
+        #child = [None, 5, 1, 4, None]
         
         #Save genes/cities already used in the child
         used_cities = set(child[a:b])
@@ -126,7 +130,7 @@ def crossover(p1, p2, r_cross=0.9): #Crossover-Probability (90 %)
     #Create two children using OX, with parents swapped
     return [ox(p1, p2), ox(p2, p1)]
 
-# von hier
+
 # swap two random cities
 def mutation(route, r_mut):
     for i in range(len(route)): #iterates over every city
@@ -144,7 +148,7 @@ def genetic_algorithm_tsp(cities, n_iter, n_pop, r_cross, r_mut):
     best, best_eval = pop[0], total_distance(pop[0], cities)
 
     #evolve population over fixed number of generations
-    for gen in range(n_iter):
+    for gen in range(n_iter): #n_iter=500
         #calculate fitness scores for each individual in population
         scores = [total_distance(p, cities) for p in pop]
 
@@ -165,7 +169,7 @@ def genetic_algorithm_tsp(cities, n_iter, n_pop, r_cross, r_mut):
             for c in crossover(p1, p2, r_cross): #crossover parents to create children
                 children.append(mutation(c, r_mut)) #mutate children and add to new population  
 
-        pop = children #replace old population with new one 
+        pop = children #replace old population by new one 
 
     return best, best_eval #return best route and its distance
 
