@@ -18,7 +18,13 @@ def load_and_validate_csv(path):
         raise FileNotFoundError("City data file not found.")
 
     # Select only relevant columns and rename them
-    df = df.iloc[:, [7, 13, 14]]
+    # Error handling for missing columns
+    try:
+        df = df[["Gemeindename", "Längengrad", "Breitengrad"]]
+    except KeyError as e:
+        raise ValueError(
+            f"Missing column: {e}"
+        )
     df.columns = ["city", "lon", "lat"]
 
 
