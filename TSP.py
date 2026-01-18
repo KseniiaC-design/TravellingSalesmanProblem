@@ -248,7 +248,8 @@ if __name__ == "__main__":
 #Time and run Genetic Algorithm on small dataset
     print("\n--- Optimal Route für Subset (GA) ---")
     t0 = time.time()
-    ga_route_small, ga_distance_small = genetic_algorithm_tsp(coords_small, n_iter=500, n_pop=100, r_cross=0.9, r_mut=0.02)
+    #Adjust parameters for smaller dataset
+    ga_route_small, ga_distance_small = genetic_algorithm_tsp(coords_small, n_iter=100, n_pop=20, r_cross=0.9, r_mut=0.02)
     ga_time_small = time.time() - t0
     print("\nRoute:")
     for i in [0] + ga_route_small + [0]:
