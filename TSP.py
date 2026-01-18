@@ -25,7 +25,7 @@ def load_and_validate_csv(path):
     # Clean selected columns
     # Devide the city name (as string) into before and after comma and keep first part (Berlin, Germany -> Berlin)
     #Convert longitude and latitude to numeric (float), if number not convertable/theres problems coerce to NaN
-    df["city"] = df["city"].astype(str).str.split(",").str[0].str.strip()
+    df["city"] = df["city"].astype(str).str.split(",").str[0].str.strip() #Entfernt Leerzeichen am Anfang und Ende
     df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
     df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
 
@@ -77,8 +77,8 @@ def total_distance(route, cities, start_city=0):
 def initial_population(n_pop, n_cities, start_city=0):
     # generate random permutations meaning order of cities excluding the start city
     cities = [i for i in range(n_cities) if i != start_city]
-    return [permutation(cities).tolist() for _ in range(n_pop)]
-
+    return [permutation(cities).tolist() for _ in range(n_pop)]# .tolist() converts the NumPy array into a Python list -> important for mutation + crossover
+                            
 # tournament selection
 def selection(pop, scores, k=3):
     # first random selection
@@ -99,7 +99,7 @@ def crossover(p1, p2, r_cross=0.9): #Crossover-Probability (90 %)
 
     #size of the route of the parent1
     size = len(p1)
-    a, b = sorted(randint(0, size, 2)) #random crossover points
+    a, b = sorted(randint(0, size, 2)) #two random crossover points
 
 # order crossover (OX) implementation, since we are dealing with permutations (routes)
         #Create child by copying a slice from parent1 and filling remaining positions with parent2
