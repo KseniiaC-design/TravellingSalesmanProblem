@@ -99,7 +99,7 @@ def crossover(p1, p2, r_cross=0.9): #Crossover-Probability (90 %)
 
     #size of the route of the parent1
     size = len(p1)
-    a, b = sorted(randint(0, size, 2)) #two random crossover points
+    a, b = sorted(randint(0, size, 2)) #two random crossover points between 0 (inclusive) and size (exclusive) (len(p1))
 
 # order crossover (OX) implementation, since we are dealing with permutations (routes)
         #Create child by copying a slice from parent1 and filling remaining positions with parent2
