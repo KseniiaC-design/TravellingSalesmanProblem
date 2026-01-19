@@ -76,7 +76,7 @@ def total_distance(route, cities, start_city=0):
         #iterate through all cities in the full route, excluding the last one
         #Meaning: We calculate distance between each pair of consecutive cities in the full route
         haversine(cities[full_route[i]], cities[full_route[i + 1]])
-        for i in range(len(full_route) - 1) 
+        for i in range(len(full_route) - 1) # [0,3,5,7,6,0] 6 cities -> [0->3, 3->5, 5->7, 7->6, 6->0] 5 dictances, so we need -1
     )
 
 # generate initial population
@@ -85,7 +85,7 @@ def initial_population(n_pop, n_cities, start_city=0):
     cities = [i for i in range(n_cities) if i != start_city]
     return [permutation(cities).tolist() for _ in range(n_pop)]# .tolist() converts the NumPy array into a Python list -> important for mutation + crossover
                             
-# tournament selection
+# tournament selection - choose parents
 def selection(pop, scores, k=3):
     # first random selection
     i = randint(len(pop))
@@ -226,7 +226,7 @@ if __name__ == "__main__":
     print("\nRoute:")
     for i in [0] + best_route + [0]:
         print(city_names[i])
-#bis hier
+
 
     print("\n--- Metrics for Optimal GA solution ---")
     print(f"GA distance: {best_distance:.2f} km") #Genetic Algorithm overall distance
