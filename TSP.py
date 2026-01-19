@@ -271,10 +271,10 @@ if __name__ == "__main__":
     print(f"GA runtime: {ga_time_small:.3f} s")
     print(f"Exact runtime: {exact_time:.4f} s")
 
-zoom_min_lon = 25500
-zoom_max_lon = 25950
-zoom_min_lat = 8.87
-zoom_max_lat = 9.30
+zoom_min_lon = 8.85
+zoom_max_lon = 9.35
+zoom_min_lat = 53.88
+zoom_max_lat = 54.05
 
 
 #Figure plotting
